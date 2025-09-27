@@ -1,0 +1,96 @@
+#include <stdio.h>
+
+#define MAX 100
+
+typedef struct {
+    int pid;    // Process ID
+    int at;     // Arrival Time
+    int bt;     // Burst Time
+    int rt;     // Remaining Time
+    int ct;     // Completion Time
+    int tat;    // Turnaround Time
+    int wt;     // Waiting Time
+} Process;
+
+int main() {
+    int n, tq;
+    Process p[MAX];
+
+    printf("Enter number of processes: ");
+    scanf("%d", &n);
+
+    for (int i = 0; i < n; i++) {
+        p[i].pid = i + 1;
+        printf("\nEnter Arrival Time and Burst Time for Process %d: ", i + 1);
+        scanf("%d %d", &p[i].at, &p[i].bt);
+        p[i].rt = p[i].bt;  // Initially remaining time = burst time
+    }
+
+    printf("\nEnter Time Quantum: ");
+    scanf("%d", &tq);
+
+    int time = 0, completed = 0;
+    int queue[MAX], front = 0, rear = 0; // Circular queue for ready processes
+    int visited[MAX] = {0};
+
+    // Start with processes that have arrived at time 0
+    for (int i = 0; i < n; i++) {
+        if (p[i].at == 0) {
+            queue[rear++] = i;
+            visited[i] = 1;
+        }
+    }
+
+    while (completed < n) {
+        if (front == rear) { // If queue is empty, move time
+            time++;
+            for (int i = 0; i < n; i++) {
+                if (!visited[i] && p[i].at <= time) {
+                    queue[rear++] = i;
+                    visited[i] = 1;
+                }
+            }
+            continue;
+        }
+
+        int idx = queue[front++]; // Dequeue process
+
+        // Execute process for min(tq, remaining time)
+        int execTime = (p[idx].rt < tq) ? p[idx].rt : tq;
+        time += execTime;
+        p[idx].rt -= execTime;
+
+        // Add newly arrived processes to the queue
+        for (int i = 0; i < n; i++) {
+            if (!visited[i] && p[i].at <= time) {
+                queue[rear++] = i;
+                visited[i] = 1;
+            }
+        }
+
+        if (p[idx].rt == 0) { // Process finished
+            p[idx].ct = time;
+            p[idx].tat = p[idx].ct - p[idx].at;
+            p[idx].wt = p[idx].tat - p[idx].bt;
+            completed++;
+        } else {
+            queue[rear++] = idx; // Put process back in queue
+        }
+    }
+
+    // Display results
+    float avgWT = 0, avgTAT = 0;
+    printf("\nPID\tAT\tBT\tCT\tTAT\tWT\n");
+    for (int i = 0; i < n; i++) {
+        printf("%d\t%d\t%d\t%d\t%d\t%d\n",
+               p[i].pid, p[i].at, p[i].bt,
+               p[i].ct, p[i].tat, p[i].wt);
+        avgWT += p[i].wt;
+        avgTAT += p[i].tat;
+    }
+
+    printf("\nAverage Turnaround Time = %.2f", avgTAT / n);
+    printf("\nAverage Waiting Time = %.2f\n", avgWT / n);
+
+    return 0;
+}
