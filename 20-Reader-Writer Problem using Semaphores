@@ -1,0 +1,81 @@
+/* file: reader_writer_sem.c
+   Compile: gcc -o reader_writer_sem reader_writer_sem.c -pthread
+*/
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include <unistd.h>
+
+int data = 0;
+int read_count = 0;
+
+sem_t mutex_readcount; // protect read_count
+sem_t resource;        // controls access to the shared resource
+sem_t rtry;            // allows writers priority (to avoid reader starvation)
+
+void *reader(void *arg) {
+    int id = *(int*)arg;
+    for (int i=0;i<5;i++){
+        sem_wait(&rtry);           // wait to try (gives writers priority)
+        sem_wait(&mutex_readcount);
+        read_count++;
+        if (read_count == 1) sem_wait(&resource); // first reader locks resource
+        sem_post(&mutex_readcount);
+        sem_post(&rtry);
+
+        // --- reading ---
+        printf("Reader %d reads data = %d\n", id, data);
+        usleep(100000);
+
+        sem_wait(&mutex_readcount);
+        read_count--;
+        if (read_count == 0) sem_post(&resource); // last reader releases resource
+        sem_post(&mutex_readcount);
+
+        usleep(100000);
+    }
+    return NULL;
+}
+
+void *writer(void *arg) {
+    int id = *(int*)arg;
+    for (int i=0;i<5;i++){
+        sem_wait(&rtry);
+        sem_wait(&resource);
+
+        // --- writing ---
+        data += id; // simple update
+        printf("Writer %d updated data to %d\n", id, data);
+        usleep(200000);
+
+        sem_post(&resource);
+        sem_post(&rtry);
+
+        usleep(150000);
+    }
+    return NULL;
+}
+
+int main() {
+    pthread_t r1, r2, w1;
+    sem_init(&mutex_readcount, 0, 1);
+    sem_init(&resource, 0, 1);
+    sem_init(&rtry, 0, 1);
+
+    int rida = 1, ridb = 2, wid = 1;
+    pthread_create(&r1, NULL, reader, &rida);
+    pthread_create(&r2, NULL, reader, &ridb);
+    pthread_create(&w1, NULL, writer, &wid);
+
+    pthread_join(r1, NULL);
+    pthread_join(r2, NULL);
+    pthread_join(w1, NULL);
+
+    sem_destroy(&mutex_readcount);
+    sem_destroy(&resource);
+    sem_destroy(&rtry);
+
+    printf("Final data = %d\n", data);
+    return 0;
+}
