@@ -1,0 +1,130 @@
+/* file: random_access_employee.c
+   Compile: gcc -o random_access_employee random_access_employee.c
+*/
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define FILENAME "employees.dat"
+#define NAME_LEN 30
+
+typedef struct {
+    int id;                 // unique employee id (0 means empty)
+    char name[NAME_LEN];
+    int age;
+    float salary;
+    int is_deleted;         // 0 = active, 1 = deleted
+} Employee;
+
+void add_employee() {
+    FILE *fp = fopen(FILENAME, "ab+");
+    if (!fp) { perror("fopen"); return; }
+
+    Employee e;
+    printf("Enter ID (integer): ");
+    if (scanf("%d", &e.id) != 1) { while(getchar()!='\n'); printf("Invalid input\n"); fclose(fp); return; }
+    printf("Enter name: "); getchar();
+    fgets(e.name, NAME_LEN, stdin); e.name[strcspn(e.name, "\n")] = '\0';
+    printf("Enter age: "); scanf("%d", &e.age);
+    printf("Enter salary: "); scanf("%f", &e.salary);
+    e.is_deleted = 0;
+
+    // check for duplicate ID
+    rewind(fp);
+    Employee tmp;
+    while (fread(&tmp, sizeof(Employee), 1, fp) == 1) {
+        if (tmp.id == e.id && !tmp.is_deleted) {
+            printf("Employee with ID %d already exists. Aborting.\n", e.id);
+            fclose(fp); return;
+        }
+    }
+
+    fwrite(&e, sizeof(Employee), 1, fp);
+    fclose(fp);
+    printf("Employee added.\n");
+}
+
+void display_all() {
+    FILE *fp = fopen(FILENAME, "rb");
+    if (!fp) { perror("fopen"); return; }
+    Employee e;
+    printf("\nAll employees:\n");
+    printf("ID\tName\t\tAge\tSalary\tStatus\n");
+    while (fread(&e, sizeof(Employee), 1, fp) == 1) {
+        if (e.id != 0) {
+            printf("%d\t%-15s\t%d\t%.2f\t%s\n", e.id, e.name, e.age, e.salary, e.is_deleted ? "DELETED":"ACTIVE");
+        }
+    }
+    fclose(fp);
+}
+
+long find_record_pos_by_id(FILE *fp, int id) {
+    rewind(fp);
+    Employee e;
+    long pos = 0;
+    while (fread(&e, sizeof(Employee), 1, fp) == 1) {
+        if (e.id == id && !e.is_deleted) return pos;
+        pos++;
+    }
+    return -1;
+}
+
+void update_employee() {
+    FILE *fp = fopen(FILENAME, "rb+");
+    if (!fp) { perror("fopen"); return; }
+    int id;
+    printf("Enter ID to update: ");
+    if (scanf("%d", &id) != 1) { printf("Invalid\n"); fclose(fp); return; }
+    long idx = find_record_pos_by_id(fp, id);
+    if (idx == -1) { printf("Employee not found.\n"); fclose(fp); return; }
+
+    Employee e;
+    fseek(fp, idx * sizeof(Employee), SEEK_SET);
+    fread(&e, sizeof(Employee), 1, fp);
+
+    printf("Current name: %s\nEnter new name (or press enter to keep): ", e.name); getchar();
+    char buf[NAME_LEN];
+    fgets(buf, NAME_LEN, stdin);
+    if (buf[0] != '\n') { buf[strcspn(buf, "\n")] = '\0'; strncpy(e.name, buf, NAME_LEN); }
+
+    printf("Current age: %d\nEnter new age (or 0 to keep): ", e.age); int a; scanf("%d", &a); if (a>0) e.age = a;
+    printf("Current salary: %.2f\nEnter new salary (or negative to keep): ", e.salary); float s; scanf("%f", &s); if (s>=0) e.salary = s;
+
+    fseek(fp, idx * sizeof(Employee), SEEK_SET);
+    fwrite(&e, sizeof(Employee), 1, fp);
+    fclose(fp);
+    printf("Updated.\n");
+}
+
+void delete_employee() {
+    FILE *fp = fopen(FILENAME, "rb+");
+    if (!fp) { perror("fopen"); return; }
+    int id; printf("Enter ID to delete: "); if (scanf("%d", &id)!=1) { fclose(fp); return; }
+    long idx = find_record_pos_by_id(fp, id);
+    if (idx == -1) { printf("Employee not found.\n"); fclose(fp); return; }
+    Employee e;
+    fseek(fp, idx * sizeof(Employee), SEEK_SET);
+    fread(&e, sizeof(Employee), 1, fp);
+    e.is_deleted = 1;
+    fseek(fp, idx * sizeof(Employee), SEEK_SET);
+    fwrite(&e, sizeof(Employee), 1, fp);
+    fclose(fp);
+    printf("Marked as deleted.\n");
+}
+
+int main() {
+    int choice;
+    while (1) {
+        printf("\nMenu:\n1. Add employee\n2. Display all\n3. Update employee\n4. Delete employee\n5. Exit\nChoice: ");
+        if (scanf("%d", &choice)!=1) { while(getchar()!='\n'); continue; }
+        switch (choice) {
+            case 1: add_employee(); break;
+            case 2: display_all(); break;
+            case 3: update_employee(); break;
+            case 4: delete_employee(); break;
+            case 5: exit(0);
+            default: printf("Invalid\n");
+        }
+    }
+    return 0;
+}
