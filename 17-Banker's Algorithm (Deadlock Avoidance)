@@ -1,0 +1,80 @@
+/* file: bankers.c
+   Compile: gcc -o bankers bankers.c
+*/
+#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+    int n, m;
+    printf("Enter number of processes: "); scanf("%d", &n);
+    printf("Enter number of resource types: "); scanf("%d", &m);
+
+    int *available = malloc(m * sizeof(int));
+    int **max = malloc(n * sizeof(int*));
+    int **alloc = malloc(n * sizeof(int*));
+    int **need = malloc(n * sizeof(int*));
+    for (int i=0;i<n;i++){
+        max[i]=malloc(m*sizeof(int));
+        alloc[i]=malloc(m*sizeof(int));
+        need[i]=malloc(m*sizeof(int));
+    }
+
+    printf("Enter Available vector (space separated %d ints):\n", m);
+    for (int j=0;j<m;j++) scanf("%d",&available[j]);
+
+    printf("Enter Allocation matrix (n x m):\n");
+    for (int i=0;i<n;i++){
+        printf("P%d: ", i);
+        for (int j=0;j<m;j++) scanf("%d",&alloc[i][j]);
+    }
+
+    printf("Enter Max matrix (n x m):\n");
+    for (int i=0;i<n;i++){
+        printf("P%d: ", i);
+        for (int j=0;j<m;j++) scanf("%d",&max[i][j]);
+    }
+
+    for (int i=0;i<n;i++){
+        for (int j=0;j<m;j++) need[i][j] = max[i][j] - alloc[i][j];
+    }
+
+    // Banker's safety algorithm
+    int *work = malloc(m * sizeof(int));
+    int *finish = calloc(n, sizeof(int));
+    int *safeSeq = malloc(n * sizeof(int));
+    for (int j=0;j<m;j++) work[j]=available[j];
+
+    int count = 0;
+    int changed;
+    do {
+        changed = 0;
+        for (int i=0;i<n;i++){
+            if (!finish[i]) {
+                int can = 1;
+                for (int j=0;j<m;j++) if (need[i][j] > work[j]) { can = 0; break; }
+                if (can) {
+                    for (int j=0;j<m;j++) work[j] += alloc[i][j];
+                    finish[i] = 1;
+                    safeSeq[count++] = i;
+                    changed = 1;
+                }
+            }
+        }
+    } while (changed);
+
+    int safe = 1;
+    for (int i=0;i<n;i++) if (!finish[i]) safe = 0;
+
+    if (safe) {
+        printf("System is in a SAFE state.\nSafe sequence: ");
+        for (int i=0;i<count;i++) printf("P%d%s", safeSeq[i], i==count-1? "\n": " -> ");
+    } else {
+        printf("System is NOT in a safe state. Deadlock possible.\n");
+    }
+
+    // free
+    for (int i=0;i<n;i++){ free(max[i]); free(alloc[i]); free(need[i]); }
+    free(max); free(alloc); free(need);
+    free(available); free(work); free(finish); free(safeSeq);
+    return 0;
+}
