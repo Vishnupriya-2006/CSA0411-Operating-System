@@ -1,0 +1,26 @@
+// mygrep.c
+// Very simple grep: searches for a pattern in a file and prints matching lines.
+
+#include <stdio.h>
+#include <string.h>
+
+int main(int argc, char *argv[]) {
+    if (argc < 3) {
+        printf("Usage: %s <pattern> <file>\n", argv[0]);
+        return 1;
+    }
+    const char *pat = argv[1];
+    const char *fname = argv[2];
+    FILE *f = fopen(fname, "r");
+    if (!f) { perror("fopen"); return 1; }
+    char line[4096];
+    int lineno = 0;
+    while (fgets(line, sizeof(line), f)) {
+        lineno++;
+        if (strstr(line, pat)) {
+            printf("%s:%d: %s", fname, lineno, line);
+        }
+    }
+    fclose(f);
+    return 0;
+}
