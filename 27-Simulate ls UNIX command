@@ -1,0 +1,32 @@
+// myls.c
+// Simple simulation of 'ls' showing names in current directory and optional -l (very small)
+
+#include <stdio.h>
+#include <dirent.h>
+#include <sys/stat.h>
+#include <string.h>
+
+int main(int argc, char *argv[]) {
+    int showLong = 0;
+    if (argc > 1 && strcmp(argv[1], "-l") == 0) showLong = 1;
+
+    DIR *d = opendir(".");
+    if (!d) { perror("opendir"); return 1; }
+    struct dirent *de;
+    while ((de = readdir(d)) != NULL) {
+        if (de->d_name[0] == '.') continue; // skip hidden
+        if (!showLong) {
+            printf("%s  ", de->d_name);
+        } else {
+            struct stat st;
+            if (stat(de->d_name, &st) == 0) {
+                printf("%10lld %s\n", (long long)st.st_size, de->d_name);
+            } else {
+                printf("???????? %s\n", de->d_name);
+            }
+        }
+    }
+    if (!showLong) printf("\n");
+    closedir(d);
+    return 0;
+}
