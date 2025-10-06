@@ -1,0 +1,32 @@
+// linked_allocation.c
+// Simulate linked allocation: each block stores 'next' pointer.
+
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct Block {
+    int id;
+    int next; // -1 for end
+} Block;
+
+int main() {
+    int n;
+    printf("Number of allocated blocks for file: ");
+    if (scanf("%d", &n)!=1) return 0;
+    Block *blocks = malloc(n * sizeof(Block));
+    printf("Enter block id and next index (-1 for end) for each of %d entries:\n", n);
+    for (int i=0;i<n;i++) scanf("%d %d", &blocks[i].id, &blocks[i].next);
+
+    int startIdx;
+    printf("Enter index of start block in this table (0-based): ");
+    if (scanf("%d", &startIdx)!=1) return 0;
+    printf("Traversing file blocks: ");
+    int cur = startIdx;
+    while (cur!=-1) {
+        printf("%d ", blocks[cur].id);
+        cur = blocks[cur].next;
+    }
+    printf("\n");
+    free(blocks);
+    return 0;
+}
