@@ -1,0 +1,55 @@
+// optimal_paging.c
+// Simulate Optimal algorithm by looking ahead to choose victim.
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
+
+int findVictim(int *frame, int frames, int *ref, int n, int cur) {
+    int victim = -1;
+    int farthest = -1;
+    for (int i=0;i<frames;i++) {
+        if (frame[i]==-1) return i; // empty slot
+        int j;
+        for (j=cur+1;j<n;j++) if (ref[j]==frame[i]) break;
+        if (j==n) return i; // not used again => best victim
+        if (j > farthest) { farthest = j; victim = i; }
+    }
+    return (victim==-1)?0:victim;
+}
+
+int main() {
+    int frames, n;
+    printf("Frames: ");
+    if (scanf("%d", &frames)!=1) return 0;
+    printf("Number of references: ");
+    if (scanf("%d", &n)!=1) return 0;
+    int ref[n];
+    printf("Enter %d reference pages:\n", n);
+    for (int i=0;i<n;i++) scanf("%d",&ref[i]);
+
+    int *frame = malloc(frames * sizeof(int));
+    for (int i=0;i<frames;i++) frame[i]=-1;
+    int faults=0;
+
+    for (int i=0;i<n;i++) {
+        int page=ref[i];
+        int hit=0;
+        for (int j=0;j<frames;j++) if (frame[j]==page) { hit=1; break; }
+        if (!hit) {
+            int v = findVictim(frame, frames, ref, n, i);
+            frame[v]=page;
+            faults++;
+        }
+        printf("Ref %d: ", page);
+        for (int j=0;j<frames;j++) {
+            if (frame[j]==-1) printf("- ");
+            else printf("%d ", frame[j]);
+        }
+        printf("\n");
+    }
+
+    printf("Total page faults = %d\n", faults);
+    free(frame);
+    return 0;
+}
