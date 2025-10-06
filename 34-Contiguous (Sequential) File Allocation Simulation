@@ -1,0 +1,23 @@
+// contiguous_allocation.c
+// Simulate contiguous allocation: file occupies start..start+len-1
+// Accessing record i requires reading from start to start+i (simulated).
+
+#include <stdio.h>
+
+int main() {
+    int fileStart, fileSize;
+    printf("Enter file start block and file size (blocks): ");
+    if (scanf("%d %d", &fileStart, &fileSize)!=2) return 0;
+    int recIndex;
+    printf("Enter record index to access (0-based): ");
+    if (scanf("%d", &recIndex)!=1) return 0;
+    if (recIndex < 0 || recIndex >= fileSize) {
+        printf("Invalid record index\n"); return 0;
+    }
+    printf("Physical blocks for file: ");
+    for (int i=0;i<fileSize;i++) printf("%d ", fileStart + i);
+    printf("\nTo access record %d, we must read blocks: ", recIndex);
+    for (int i=0;i<=recIndex;i++) printf("%d ", fileStart + i);
+    printf("\n");
+    return 0;
+}
