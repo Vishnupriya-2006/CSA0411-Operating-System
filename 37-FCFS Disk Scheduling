@@ -1,0 +1,26 @@
+// fcfs_disk.c
+// First-Come-First-Served disk scheduling.
+
+#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+    int n, head;
+    printf("Number of requests: ");
+    if (scanf("%d", &n)!=1) return 0;
+    int req[n];
+    printf("Enter %d requests (cylinder numbers):\n", n);
+    for (int i=0;i<n;i++) scanf("%d",&req[i]);
+    printf("Enter initial head position: ");
+    if (scanf("%d", &head)!=1) return 0;
+
+    int total = 0, cur = head;
+    printf("Traversal: %d ", cur);
+    for (int i=0;i<n;i++){
+        total += abs(req[i] - cur);
+        cur = req[i];
+        printf("-> %d ", cur);
+    }
+    printf("\nTotal head movement = %d\n", total);
+    return 0;
+}
