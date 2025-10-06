@@ -1,0 +1,22 @@
+// indexed_allocation.c
+// Simulate an index block that holds pointers to data blocks.
+
+#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+    int fileBlocks;
+    printf("Number of file blocks: ");
+    if (scanf("%d", &fileBlocks)!=1) return 0;
+    int *indexBlock = malloc(fileBlocks * sizeof(int));
+    printf("Enter block numbers for the %d file blocks:\n", fileBlocks);
+    for (int i=0;i<fileBlocks;i++) scanf("%d",&indexBlock[i]);
+
+    int access;
+    printf("Enter logical block number to access (0-based): ");
+    if (scanf("%d", &access)!=1) return 0;
+    if (access<0 || access>=fileBlocks) { printf("Invalid\n"); free(indexBlock); return 0; }
+    printf("Index block entry %d -> physical block %d\n", access, indexBlock[access]);
+    free(indexBlock);
+    return 0;
+}
