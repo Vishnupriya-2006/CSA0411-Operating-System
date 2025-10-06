@@ -1,0 +1,43 @@
+// cscan_disk.c
+// Circular SCAN: services in one direction; when end reached it jumps to other end without servicing in reverse.
+
+#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+    int n, head, maxCyl;
+    printf("Max cylinder (exclusive): "); if (scanf("%d",&maxCyl)!=1) return 0;
+    printf("Number of requests: "); if (scanf("%d",&n)!=1) return 0;
+    int req[n];
+    printf("Enter %d requests:\n", n);
+    for (int i=0;i<n;i++) scanf("%d",&req[i]);
+    printf("Initial head: "); if (scanf("%d",&head)!=1) return 0;
+    int dir;
+    printf("Direction (1=right/ascending, 0=left/descending): "); if (scanf("%d",&dir)!=1) return 0;
+
+    int left[n], right[n], l=0, r=0;
+    for (int i=0;i<n;i++){
+        if (req[i] < head) left[l++]=req[i];
+        else right[r++]=req[i];
+    }
+    // sort
+    for (int i=0;i<l-1;i++) for (int j=i+1;j<l;j++) if (left[i]>left[j]) {int t=left[i]; left[i]=left[j]; left[j]=t;}
+    for (int i=0;i<r-1;i++) for (int j=i+1;j<r;j++) if (right[i]>right[j]) {int t=right[i]; right[i]=right[j]; right[j]=t;}
+
+    int total=0, cur=head;
+    printf("Traversal: %d ", cur);
+
+    if (dir==1) {
+        for (int i=0;i<r;i++){ total += abs(right[i]-cur); cur = right[i]; printf("-> %d ", cur); }
+        // jump to start (0) without counting serviced movement (but count the jump distance)
+        if (l>0) { total += abs((maxCyl-1) - cur); cur = 0; total += (maxCyl-1); /* simulate jump across */ printf("-> jump -> %d ", cur); }
+        for (int i=0;i<l;i++){ total += abs(left[i]-cur); cur = left[i]; printf("-> %d ", cur); }
+    } else {
+        // left direction
+        for (int i=l-1;i>=0;i--){ total += abs(left[i]-cur); cur = left[i]; printf("-> %d ", cur); }
+        if (r>0) { total += abs(cur - 0); cur = maxCyl - 1; total += (maxCyl-1); printf("-> jump -> %d ", cur); }
+        for (int i=r-1;i>=0;i--){ total += abs(right[i]-cur); cur = right[i]; printf("-> %d ", cur); }
+    }
+    printf("\nTotal head movement (approx) = %d\n", total);
+    return 0;
+}
