@@ -1,0 +1,49 @@
+// best_fit.c
+// Simulates best-fit allocation.
+
+#include <stdio.h>
+#include <limits.h>
+
+int main() {
+    int m, n;
+    printf("Enter number of memory blocks: ");
+    scanf("%d", &m);
+    int block[m];
+    printf("Enter sizes of %d blocks:\n", m);
+    for (int i = 0; i < m; i++) scanf("%d", &block[i]);
+
+    printf("Enter number of processes: ");
+    scanf("%d", &n);
+    int proc[n];
+    printf("Enter sizes of %d processes:\n", n);
+    for (int i = 0; i < n; i++) scanf("%d", &proc[i]);
+
+    int allocation[n];
+    for (int i = 0; i < n; i++) allocation[i] = -1;
+
+    for (int i = 0; i < n; i++) {
+        int bestIdx = -1;
+        int minRem = INT_MAX;
+        for (int j = 0; j < m; j++) {
+            if (block[j] >= proc[i]) {
+                int rem = block[j] - proc[i];
+                if (rem < minRem) {
+                    minRem = rem;
+                    bestIdx = j;
+                }
+            }
+        }
+        if (bestIdx != -1) {
+            allocation[i] = bestIdx;
+            block[bestIdx] -= proc[i];
+        }
+    }
+
+    printf("\nProcess No.\tProcess Size\tBlock No.\n");
+    for (int i = 0; i < n; i++) {
+        printf("%d\t\t%d\t\t", i+1, proc[i]);
+        if (allocation[i] != -1) printf("%d\n", allocation[i]+1);
+        else printf("Not Allocated\n");
+    }
+    return 0;
+}
