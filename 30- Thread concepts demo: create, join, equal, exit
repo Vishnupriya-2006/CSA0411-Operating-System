@@ -1,0 +1,38 @@
+// thread_demo.c
+// Demonstrates pthread_create, pthread_join, pthread_equal, pthread_exit
+
+#include <stdio.h>
+#include <pthread.h>
+#include <unistd.h>
+
+void *thread_func(void *arg) {
+    int id = *(int*)arg;
+    printf("Thread %d: started, thread id (self) = %lu\n", id, (unsigned long)pthread_self());
+    sleep(1);
+    if (id == 1) {
+        printf("Thread %d calling pthread_exit\n", id);
+        pthread_exit((void*)42); // return pointer-sized value
+    }
+    return (void*) (intptr_t)(id * 10);
+}
+
+int main() {
+    pthread_t t1, t2;
+    int id1 = 1, id2 = 2;
+    pthread_create(&t1, NULL, thread_func, &id1);
+    pthread_create(&t2, NULL, thread_func, &id2);
+
+    void *res1;
+    pthread_join(t1, &res1);
+    printf("Joined t1, return value = %ld\n", (long)res1);
+
+    void *res2;
+    pthread_join(t2, &res2);
+    printf("Joined t2, return value = %ld\n", (long)res2);
+
+    // demonstrate pthread_equal
+    if (pthread_equal(t1, t2)) printf("t1 and t2 are equal (same thread)\n");
+    else printf("t1 and t2 are different threads\n");
+
+    return 0;
+}
