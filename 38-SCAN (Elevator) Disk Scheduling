@@ -1,0 +1,41 @@
+// scan_disk.c
+// SCAN algorithm (assumes disk cylinders 0..maxCyl-1). Direction: 0 = towards 0, 1 = towards max.
+
+#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+    int n, head, maxCyl, dir;
+    printf("Max cylinder (exclusive): ");
+    if (scanf("%d", &maxCyl)!=1) return 0;
+    printf("Number of requests: "); if (scanf("%d",&n)!=1) return 0;
+    int req[n];
+    printf("Enter %d requests:\n", n);
+    for (int i=0;i<n;i++) scanf("%d",&req[i]);
+    printf("Initial head: "); if (scanf("%d",&head)!=1) return 0;
+    printf("Direction (0=left/towards 0, 1=right/towards max): "); if (scanf("%d",&dir)!=1) return 0;
+
+    // Separate requests
+    int left[n], right[n], l=0, r=0;
+    for (int i=0;i<n;i++){
+        if (req[i] < head) left[l++]=req[i];
+        else right[r++]=req[i];
+    }
+    // sort left ascending and right ascending
+    for (int i=0;i<l-1;i++) for (int j=i+1;j<l;j++) if (left[i]>left[j]) { int t=left[i]; left[i]=left[j]; left[j]=t; }
+    for (int i=0;i<r-1;i++) for (int j=i+1;j<r;j++) if (right[i]>right[j]) { int t=right[i]; right[i]=right[j]; right[j]=t; }
+
+    int total=0, cur=head;
+    printf("Traversal: %d ", cur);
+    if (dir==1) {
+        // go right first
+        for (int i=0;i<r;i++){ total += abs(right[i]-cur); cur = right[i]; printf("-> %d ", cur); }
+        // then go to end (maxCyl-1) if desired (this implementation goes to last request then reverses)
+        for (int i=l-1;i>=0;i--){ total += abs(left[i]-cur); cur = left[i]; printf("-> %d ", cur); }
+    } else {
+        for (int i=l-1;i>=0;i--){ total += abs(left[i]-cur); cur = left[i]; printf("-> %d ", cur); }
+        for (int i=0;i<r;i++){ total += abs(right[i]-cur); cur = right[i]; printf("-> %d ", cur); }
+    }
+    printf("\nTotal head movement = %d\n", total);
+    return 0;
+}
