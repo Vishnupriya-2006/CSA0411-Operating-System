@@ -1,0 +1,51 @@
+// lru_paging.c
+// Simulate LRU using timestamps.
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
+
+int main() {
+    int frames, n;
+    printf("Frames: ");
+    if (scanf("%d", &frames)!=1) return 0;
+    printf("Number of references: ");
+    if (scanf("%d", &n)!=1) return 0;
+    int ref[n];
+    printf("Enter %d reference pages:\n", n);
+    for (int i=0;i<n;i++) scanf("%d",&ref[i]);
+
+    int *frame = malloc(frames * sizeof(int));
+    int *time = malloc(frames * sizeof(int));
+    for (int i=0;i<frames;i++){ frame[i]=-1; time[i]=0; }
+    int faults=0, clk=0;
+
+    for (int i=0;i<n;i++) {
+        int page=ref[i]; clk++;
+        int hit=-1;
+        for (int j=0;j<frames;j++) if (frame[j]==page) { hit=j; break; }
+        if (hit!=-1) {
+            time[hit]=clk;
+        } else {
+            // find empty or least recently used
+            int lru_idx = -1, min_time = INT_MAX;
+            for (int j=0;j<frames;j++){
+                if (frame[j]==-1) { lru_idx=j; break; }
+                if (time[j] < min_time) { min_time = time[j]; lru_idx=j; }
+            }
+            frame[lru_idx]=page;
+            time[lru_idx]=clk;
+            faults++;
+        }
+        printf("Ref %d: ", page);
+        for (int j=0;j<frames;j++) {
+            if (frame[j]==-1) printf("- ");
+            else printf("%d ", frame[j]);
+        }
+        printf("\n");
+    }
+
+    printf("Total page faults = %d\n", faults);
+    free(frame); free(time);
+    return 0;
+}
